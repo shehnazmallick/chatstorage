@@ -51,6 +51,7 @@ class ApiKeyAuthFilterTest {
     void shouldRequireValidAdminKeyForApiKeyManagementEndpoints() {
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/api-keys");
 
+        // API key lifecycle endpoints are admin-only and bypass user key auth.
         assertThrows(UnauthorizedException.class, () -> filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain()));
     }
 
@@ -79,6 +80,7 @@ class ApiKeyAuthFilterTest {
         filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
 
         verify(apiKeyService).authenticate("csk_x.secret");
+        // Downstream controllers/services rely on request-scoped user identity.
         assertEquals("user-42", request.getAttribute(AuthContext.ATTR_USER_ID));
     }
 }

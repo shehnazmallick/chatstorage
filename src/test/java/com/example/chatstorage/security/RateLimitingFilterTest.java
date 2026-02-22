@@ -44,12 +44,14 @@ class RateLimitingFilterTest {
     void shouldUseApiKeyAndForwardedIpForFingerprint() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/sessions");
         request.addHeader(ApiKeyAuthFilter.API_KEY_HEADER, "client-key");
+        // First forwarded IP is treated as the originating client.
         request.addHeader("X-Forwarded-For", "198.51.100.10, 10.0.0.1");
 
         filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(redisRateLimiterService).acquirePermission(captor.capture());
+        // Filter hashes key+IP so raw credentials are not used as Redis identifiers.
         assertEquals(sha256("client-key:198.51.100.10"), captor.getValue());
     }
 
@@ -57,6 +59,7 @@ class RateLimitingFilterTest {
     void shouldFallbackToAdminKeyForFingerprint() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/api-keys");
         request.setRemoteAddr("203.0.113.7");
+        // Admin endpoints are keyed by admin header when user API key is absent.
         request.addHeader(ApiKeyAuthFilter.ADMIN_API_KEY_HEADER, "admin-key");
 
         filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());

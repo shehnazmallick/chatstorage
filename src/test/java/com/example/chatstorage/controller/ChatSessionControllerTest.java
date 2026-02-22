@@ -39,6 +39,7 @@ class ChatSessionControllerTest {
     @Test
     void createSessionShouldUseAuthContextUser() {
         MockHttpServletRequest request = new MockHttpServletRequest();
+        // Controller must always trust authenticated context, not client-provided user IDs.
         request.setAttribute(AuthContext.ATTR_USER_ID, "user-1");
 
         ChatSessionResponse response = new ChatSessionResponse(
@@ -56,6 +57,7 @@ class ChatSessionControllerTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setAttribute(AuthContext.ATTR_USER_ID, "user-1");
         var pageable = PageRequest.of(0, 20);
+        // Typed empty page response keeps generic contract explicit in tests.
         PageResponse<ChatSessionResponse> page = new PageResponse<>(List.of(), 0, 20, 0, 0, false);
         when(chatSessionService.listSessions("user-1", true, pageable)).thenReturn(page);
 

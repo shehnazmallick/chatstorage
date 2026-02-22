@@ -1,4 +1,9 @@
 package com.example.chatstorage.dto;
 
-public record UpdateFavoriteRequest(boolean favorite) {
+import io.swagger.v3.oas.annotations.media.Schema;
+
+public record UpdateFavoriteRequest(
+        @Schema(description = "Whether to mark this session as favorite", example = "true")
+        boolean favorite
+) {
 }

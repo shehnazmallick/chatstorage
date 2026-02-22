@@ -115,6 +115,7 @@ class ChatSessionServiceTest {
         session.setUserId("user-1");
         session.setTitle("A");
 
+        // API default contract expects newest sessions first.
         var pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "updatedAt"));
         when(sessionRepository.findByUserIdAndFavorite("user-1", true, pageable))
                 .thenReturn(new PageImpl<>(java.util.List.of(session), pageable, 1));
@@ -128,6 +129,7 @@ class ChatSessionServiceTest {
     void listSessionsShouldThrowOnInvalidPageSize() {
         var pageable = PageRequest.of(0, 101);
 
+        // Guardrail to prevent unbounded/high-cost page sizes.
         assertThrows(IllegalArgumentException.class, () -> service.listSessions("user-1", null, pageable));
     }
 

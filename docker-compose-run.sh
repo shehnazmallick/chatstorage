@@ -2,12 +2,6 @@
 
 set -e
 
-# Configuration
-DOCKER_USERNAME="${DOCKER_USERNAME:-shehnaz}"
-IMAGE_NAME="chatstorage"
-IMAGE_TAG="${IMAGE_TAG:-latest}"
-FULL_IMAGE_NAME="${DOCKER_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}"
-
 # Colors
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -47,6 +41,37 @@ run_compose() {
     ${DOCKER_COMPOSE_CMD} --env-file "${ENV_FILE}" "$@"
 }
 
+require_docker_login() {
+    local username
+    username="$(docker info 2>/dev/null | awk -F': ' '/Username:/ {print $2}')"
+    if [[ -n "${username}" ]]; then
+        log_info "Docker Hub authenticated as: ${username}"
+        return 0
+    fi
+
+    log_warn "No Docker Hub login detected in Docker CLI."
+    if [[ ! -t 0 ]]; then
+        log_error "Non-interactive shell. Please run 'docker login' first."
+        exit 1
+    fi
+
+    read -r -p "Run 'docker login' now? [Y/n]: " answer
+    answer="${answer:-Y}"
+    if [[ "${answer}" =~ ^[Yy]$ ]]; then
+        docker login
+    else
+        log_error "Docker login required to continue."
+        exit 1
+    fi
+
+    username="$(docker info 2>/dev/null | awk -F': ' '/Username:/ {print $2}')"
+    if [[ -z "${username}" ]]; then
+        log_error "Docker login did not complete successfully."
+        exit 1
+    fi
+    log_info "Docker Hub authenticated as: ${username}"
+}
+
 # Main execution
 main() {
     echo "=========================================="
@@ -60,6 +85,7 @@ main() {
     
     case "${1:-up}" in
         up)
+            require_docker_login
             log_info "Starting all services..."
             run_compose up -d
             log_info "Services started ✓"
@@ -97,11 +123,13 @@ main() {
             run_compose ps
             ;;
         build)
+            require_docker_login
             log_info "Building services..."
             run_compose build
             log_info "Services built ✓"
             ;;
         rebuild)
+            require_docker_login
             log_info "Rebuilding services and starting..."
             run_compose up --build -d
             log_info "Services rebuilt and started ✓"

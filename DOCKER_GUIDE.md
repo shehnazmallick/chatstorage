@@ -11,8 +11,8 @@ Automates the entire workflow: check prerequisites, pull base images, build the 
 **Usage:**
 
 ```bash
-# Set Docker username (default: shehnaz)
-export DOCKER_USERNAME=shehnaz
+# Set Docker username (default: your_dockerhub_username)
+export DOCKER_USERNAME=your_dockerhub_username
 
 # Run the script
 ./docker-build-push.sh
@@ -27,14 +27,14 @@ IMAGE_TAG=v1.0.0 ./docker-build-push.sh
 3. ✓ Pulls all base images (Java, PostgreSQL, Redis, Adminer)
 4. ✓ Builds the application image
 5. ✓ Tags the image as latest
-6. ✓ Pushes to Docker Hub (shehnaz/chatstorage:latest)
+6. ✓ Pushes to Docker Hub (your_dockerhub_username/chatstorage:latest)
 
 **Prerequisites:**
 - Docker installed and running
-- Logged into Docker Hub: `docker login -u shehnaz`
+- Logged into Docker Hub: `docker login -u your_dockerhub_username`
 
 **Environment Variables:**
-- `DOCKER_USERNAME` — Docker Hub username (default: shehnaz)
+- `DOCKER_USERNAME` — Docker Hub username (default: your_dockerhub_username)
 - `IMAGE_TAG` — Image tag (default: latest)
 
 ---
@@ -94,7 +94,7 @@ Easy commands to start, stop, and manage all services (app, PostgreSQL, Redis, A
 
 ```bash
 # 1. Ensure Docker is running and you're logged in
-docker login -u shehnaz
+docker login -u your_dockerhub_username
 
 # 2. Build image and push to Docker Hub
 ./docker-build-push.sh

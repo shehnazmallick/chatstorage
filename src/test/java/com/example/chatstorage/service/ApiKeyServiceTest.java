@@ -47,6 +47,7 @@ class ApiKeyServiceTest {
     @Test
     void createApiKeyShouldPersistHashAndReturnPlaintextKeyOnce() {
         when(apiKeyRepository.findByUserId("user-1")).thenReturn(Optional.empty());
+        // Simulate DB-generated fields so response mapping can be asserted.
         when(apiKeyRepository.save(any(ApiKey.class))).thenAnswer(invocation -> {
             ApiKey apiKey = invocation.getArgument(0);
             apiKey.setId(UUID.randomUUID());
@@ -67,6 +68,7 @@ class ApiKeyServiceTest {
         verify(apiKeyRepository).save(captor.capture());
         ApiKey persisted = captor.getValue();
 
+        // Key format is csk_<prefix>.<secret>; only the hash of pepper.secret is stored.
         String[] keyParts = response.apiKey().split("\\.", 2);
         String prefix = keyParts[0].substring("csk_".length());
         String secret = keyParts[1];
@@ -108,6 +110,7 @@ class ApiKeyServiceTest {
 
         when(apiKeyRepository.findByKeyPrefixAndActiveTrue("testprefix")).thenReturn(Optional.of(stored));
 
+        // Service must validate hash and only return non-sensitive identity context.
         AuthenticatedApiKey authenticated = apiKeyService.authenticate(rawApiKey);
 
         assertEquals("user-123", authenticated.userId());

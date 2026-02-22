@@ -229,6 +229,7 @@ All errors are returned as structured JSON:
 - `./docker-compose-run.sh up` uses `.env`.
 - `./docker-compose-run.sh --prod up` uses `.env.prod`.
 - Optional override: `ENV_FILE_OVERRIDE=.env.staging ./docker-compose-run.sh up`.
+- Script prompts for `docker login` if Docker Hub auth is missing.
 
 ## Required env variables
 
@@ -276,6 +277,53 @@ Services:
 - Health: `http://localhost:8080/actuator/health`
 - Adminer: `http://localhost:8081`
 - Redis: `localhost:6379`
+
+## Build and Push Docker Image
+
+The `docker-build-push.sh` script automates building, testing, and pushing the Docker image to Docker Hub.
+
+### Prerequisites
+
+- Docker installed and logged in: `docker login`
+- Docker username set (defaults to `shehnaz`)
+
+### Usage
+
+**Default (uses `shehnaz/chatstorage:latest`):**
+
+```bash
+./docker-build-push.sh
+```
+
+**Custom Docker Hub username:**
+
+```bash
+DOCKER_USERNAME=your_username ./docker-build-push.sh
+```
+
+**Custom image tag:**
+
+```bash
+IMAGE_TAG=v1.0.0 ./docker-build-push.sh
+```
+
+### What the script does:
+
+1. ✓ Checks Docker and Docker Compose prerequisites
+2. ✓ Pulls base images (Java, PostgreSQL, Redis, Adminer)
+3. ✓ Builds the Docker image
+4. ✓ Runs all unit tests
+5. ✓ Tags the image as `latest`
+6. ✓ Pushes to Docker Hub
+7. ✓ Displays image info
+
+### Example: Push with custom tag
+
+```bash
+DOCKER_USERNAME=shehnaz IMAGE_TAG=v2.0.0 ./docker-build-push.sh
+```
+
+This will build and push `shehnaz/chatstorage:v2.0.0` to Docker Hub.
 
 ## Testing and Coverage
 

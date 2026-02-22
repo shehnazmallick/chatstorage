@@ -58,6 +58,7 @@ class ChatMessageControllerTest {
         request.setAttribute(AuthContext.ATTR_USER_ID, "user-1");
         UUID sessionId = UUID.randomUUID();
         var pageable = PageRequest.of(0, 50);
+        // Empty typed page verifies controller wiring without relying on entity fixtures.
         PageResponse<ChatMessageResponse> page = new PageResponse<>(List.of(), 0, 50, 0, 0, false);
 
         when(chatMessageService.listMessages(sessionId, "user-1", pageable)).thenReturn(page);

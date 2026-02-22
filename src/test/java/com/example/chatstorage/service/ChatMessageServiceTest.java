@@ -44,6 +44,7 @@ class ChatMessageServiceTest {
         ChatSession session = new ChatSession();
         session.setId(sessionId);
 
+        // Ownership check happens before writing any message.
         when(sessionService.getSessionOrThrow(sessionId, "user-1")).thenReturn(session);
         when(messageRepository.save(any(ChatMessage.class))).thenAnswer(invocation -> {
             ChatMessage message = invocation.getArgument(0);
@@ -74,6 +75,7 @@ class ChatMessageServiceTest {
         message.setSender(SenderType.ASSISTANT);
         message.setContent("answer");
 
+        // Message history is paginated and ordered by createdAt.
         var pageable = PageRequest.of(0, 50, Sort.by(Sort.Direction.ASC, "createdAt"));
         when(messageRepository.findBySessionId(sessionId, pageable))
                 .thenReturn(new PageImpl<>(java.util.List.of(message), pageable, 1));
@@ -91,6 +93,7 @@ class ChatMessageServiceTest {
         session.setId(sessionId);
         when(sessionService.getSessionOrThrow(sessionId, "user-1")).thenReturn(session);
 
+        // Enforces upper bound to avoid expensive large scans.
         assertThrows(IllegalArgumentException.class,
                 () -> messageService.listMessages(sessionId, "user-1", PageRequest.of(0, 201)));
     }

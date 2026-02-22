@@ -3,7 +3,7 @@
 set -e  # Exit on error
 
 # Configuration
-DOCKER_USERNAME="${DOCKER_USERNAME:-shehnaz}"
+DOCKER_USERNAME="${DOCKER_USERNAME:-}"
 IMAGE_NAME="chatstorage"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 FULL_IMAGE_NAME="${DOCKER_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}"
@@ -45,19 +45,6 @@ check_prerequisites() {
     fi
     
     log_info "Prerequisites check passed ✓"
-}
-
-# Validate Docker login
-validate_docker_login() {
-    log_info "Validating Docker login for user: ${DOCKER_USERNAME}..."
-    
-    if ! docker ps &> /dev/null; then
-        log_error "Docker daemon is not running or you're not logged in."
-        log_info "Please run: docker login"
-        exit 1
-    fi
-    
-    log_info "Docker authentication validated ✓"
 }
 
 # Pull base images used in docker-compose.yml
@@ -119,6 +106,14 @@ display_image_info() {
 
 # Main execution
 main() {
+    # Validate Docker username is provided
+    if [ -z "${DOCKER_USERNAME}" ]; then
+        log_error "DOCKER_USERNAME environment variable is required"
+        echo ""
+        echo "Usage: DOCKER_USERNAME=your_username ./docker-build-push.sh"
+        exit 1
+    fi
+    
     echo "=========================================="
     echo "Docker Build & Push Script"
     echo "=========================================="
@@ -130,10 +125,9 @@ main() {
     echo ""
     
     check_prerequisites
-    validate_docker_login
     pull_base_images
     build_image
-        run_tests
+    run_tests
     tag_image
     push_image
     display_image_info
