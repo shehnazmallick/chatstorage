@@ -1,0 +1,75 @@
+services:
+  app:
+    build: .
+    container_name: chatstorage-app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      PORT: 8080
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-}
+      API_KEY_PEPPER: ${API_KEY_PEPPER:-}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-120}
+      RATE_LIMIT_WINDOW_SECONDS: ${RATE_LIMIT_WINDOW_SECONDS:-60}
+      RATE_LIMIT_FAIL_OPEN: ${RATE_LIMIT_FAIL_OPEN:-false}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_SSL_ENABLED: ${REDIS_SSL_ENABLED:-false}
+      REDIS_TIMEOUT: ${REDIS_TIMEOUT:-2s}
+      DB_URL: ${DB_URL:-jdbc:postgresql://db:5432/chatstorage}
+      DB_USERNAME: ${DB_USERNAME:-chatstorage}
+      DB_PASSWORD: ${DB_PASSWORD:-chatstorage}
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-*}
+      CORS_ALLOWED_METHODS: ${CORS_ALLOWED_METHODS:-GET,POST,PATCH,DELETE,OPTIONS}
+      CORS_ALLOWED_HEADERS: ${CORS_ALLOWED_HEADERS:-*}
+
+  db:
+    image: postgres:16-alpine
+    container_name: chatstorage-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: chatstorage
+      POSTGRES_USER: ${DB_USERNAME:-chatstorage}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-chatstorage}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-chatstorage} -d chatstorage"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  adminer:
+    image: adminer:4
+    container_name: chatstorage-adminer
+    depends_on:
+      - db
+    ports:
+      - "${ADMINER_PORT:-8081}:8080"
+
+  redis:
+    image: redis:7-alpine
+    container_name: chatstorage-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  redisdata:
