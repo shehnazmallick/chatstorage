@@ -5,8 +5,10 @@ import com.example.chatstorage.dto.UpdateFavoriteRequest;
 import com.example.chatstorage.dto.UpdateSessionNameRequest;
 import com.example.chatstorage.entity.ChatSession;
 import com.example.chatstorage.exception.NotFoundException;
+import com.example.chatstorage.mapper.ChatSessionMapper;
 import com.example.chatstorage.repository.ChatMessageRepository;
 import com.example.chatstorage.repository.ChatSessionRepository;
+import com.example.chatstorage.service.impl.ChatSessionServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,11 +37,11 @@ class ChatSessionServiceTest {
     @Mock
     private ChatMessageRepository messageRepository;
 
-    private ChatSessionService service;
+    private ChatSessionServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new ChatSessionService(sessionRepository, messageRepository);
+        service = new ChatSessionServiceImpl(sessionRepository, messageRepository, new ChatSessionMapper());
     }
 
     @Test

@@ -7,6 +7,8 @@ import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -18,6 +20,7 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     private final AppProperties appProperties;
 
     public GlobalExceptionHandler(AppProperties appProperties) {
@@ -26,17 +29,20 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(NotFoundException exception, HttpServletRequest request) {
+        log.debug("Resource not found path={} message={}", request.getRequestURI(), exception.getMessage());
         return error(HttpStatus.NOT_FOUND, exception.getMessage(), request, List.of());
     }
 
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException exception, HttpServletRequest request) {
+        log.warn("Unauthorized request path={} message={}", request.getRequestURI(), exception.getMessage());
         return error(HttpStatus.UNAUTHORIZED, exception.getMessage(), request, List.of());
     }
 
     @ExceptionHandler(RateLimitExceededException.class)
     public ResponseEntity<ErrorResponse> handleRateLimit(RateLimitExceededException exception, HttpServletRequest request) {
         long retryAfterSeconds = Math.max(1, appProperties.getRateLimit().getWindowSeconds());
+        log.warn("Rate limit exceeded path={} message={}", request.getRequestURI(), exception.getMessage());
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                 .header(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds))
                 .body(new ErrorResponse(
@@ -51,6 +57,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RateLimitServiceUnavailableException.class)
     public ResponseEntity<ErrorResponse> handleRateLimitBackendDown(RateLimitServiceUnavailableException exception, HttpServletRequest request) {
+        log.error("Rate limit backend unavailable path={} message={}", request.getRequestURI(), exception.getMessage());
         return error(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage(), request, List.of());
     }
 
@@ -59,6 +66,7 @@ public class GlobalExceptionHandler {
         List<String> details = exception.getBindingResult().getFieldErrors().stream()
                 .map(this::formatFieldError)
                 .toList();
+        log.debug("Validation failed path={} details={}", request.getRequestURI(), details);
         return error(HttpStatus.BAD_REQUEST, "Validation failed", request, details);
     }
 
@@ -67,17 +75,20 @@ public class GlobalExceptionHandler {
         List<String> details = exception.getConstraintViolations().stream()
                 .map(v -> v.getPropertyPath() + " " + v.getMessage())
                 .toList();
+        log.debug("Constraint validation failed path={} details={}", request.getRequestURI(), details);
         return error(HttpStatus.BAD_REQUEST, "Validation failed", request, details);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException exception, HttpServletRequest request) {
+        log.debug("Illegal argument path={} message={}", request.getRequestURI(), exception.getMessage());
         return error(HttpStatus.BAD_REQUEST, exception.getMessage(), request, List.of());
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception exception, HttpServletRequest request) {
-        return error(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected server error", request, List.of(exception.getMessage()));
+        log.error("Unhandled exception path={}", request.getRequestURI(), exception);
+        return error(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected server error", request, List.of());
     }
 
     private ResponseEntity<ErrorResponse> error(HttpStatus status, String message, HttpServletRequest request, List<String> details) {

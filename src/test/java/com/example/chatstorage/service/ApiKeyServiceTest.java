@@ -6,7 +6,9 @@ import com.example.chatstorage.dto.apikey.CreateApiKeyRequest;
 import com.example.chatstorage.entity.ApiKey;
 import com.example.chatstorage.exception.NotFoundException;
 import com.example.chatstorage.exception.UnauthorizedException;
+import com.example.chatstorage.mapper.ApiKeyMapper;
 import com.example.chatstorage.repository.ApiKeyRepository;
+import com.example.chatstorage.service.impl.ApiKeyServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,13 +37,13 @@ class ApiKeyServiceTest {
     @Mock
     private ApiKeyRepository apiKeyRepository;
 
-    private ApiKeyService apiKeyService;
+    private ApiKeyServiceImpl apiKeyService;
 
     @BeforeEach
     void setUp() {
         AppProperties properties = new AppProperties();
         properties.getSecurity().setApiKeyPepper("pepper-secret");
-        apiKeyService = new ApiKeyService(apiKeyRepository, properties);
+        apiKeyService = new ApiKeyServiceImpl(apiKeyRepository, properties, new ApiKeyMapper());
     }
 
     @Test

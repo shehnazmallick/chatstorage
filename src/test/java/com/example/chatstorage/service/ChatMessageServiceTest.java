@@ -4,7 +4,9 @@ import com.example.chatstorage.dto.AddMessageRequest;
 import com.example.chatstorage.entity.ChatMessage;
 import com.example.chatstorage.entity.ChatSession;
 import com.example.chatstorage.entity.SenderType;
+import com.example.chatstorage.mapper.ChatMessageMapper;
 import com.example.chatstorage.repository.ChatMessageRepository;
+import com.example.chatstorage.service.impl.ChatMessageServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,11 +33,11 @@ class ChatMessageServiceTest {
     @Mock
     private ChatSessionService sessionService;
 
-    private ChatMessageService messageService;
+    private ChatMessageServiceImpl messageService;
 
     @BeforeEach
     void setUp() {
-        messageService = new ChatMessageService(messageRepository, sessionService);
+        messageService = new ChatMessageServiceImpl(messageRepository, sessionService, new ChatMessageMapper());
     }
 
     @Test

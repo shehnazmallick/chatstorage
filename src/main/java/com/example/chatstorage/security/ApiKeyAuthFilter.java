@@ -14,6 +14,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+
 @Component
 @Order(2)
 public class ApiKeyAuthFilter extends OncePerRequestFilter {
@@ -58,7 +61,10 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
         }
 
         String provided = request.getHeader(ADMIN_API_KEY_HEADER);
-        if (!configuredAdminApiKey.equals(provided)) {
+        if (provided == null || !MessageDigest.isEqual(
+                configuredAdminApiKey.getBytes(StandardCharsets.UTF_8),
+                provided.getBytes(StandardCharsets.UTF_8)
+        )) {
             throw new UnauthorizedException("Invalid admin API key");
         }
     }
